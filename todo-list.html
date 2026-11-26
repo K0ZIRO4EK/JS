@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>To Do List</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      padding: 60px 20px;
+      background: #111827;
+      color: #f9fafb;
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      width: min(100%, 550px);
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin-bottom: 35px;
+      text-align: center;
+      font-size: 36px;
+      font-weight: 700;
+    }
+
+    .input-wrapper {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .new-task {
+      min-width: 0;
+      flex: 1;
+      padding: 16px 18px;
+      border: 2px solid #374151;
+      border-radius: 12px;
+      outline: none;
+      background: #1f2937;
+      color: #f9fafb;
+      font-size: 16px;
+    }
+
+    .new-task::placeholder {
+      color: #9ca3af;
+    }
+
+    .new-task:focus {
+      border-color: #6366f1;
+    }
+
+    .add-task {
+      padding: 16px 20px;
+      border: none;
+      border-radius: 12px;
+      background: #6366f1;
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .add-task:hover {
+      background: #4f46e5;
+    }
+
+    .add-task:active {
+      scale: .9;
+    }
+
+    .add-task.blocked {
+      opacity: .3;
+      pointer-events: none;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 25px;
+      padding: 16px 20px;
+      border: 1px solid #374151;
+      border-radius: 12px;
+      background: #1f2937;
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      text-align: center;
+    }
+
+    .stat-title {
+      color: #9ca3af;
+      font-size: 13px;
+    }
+
+    .stat-value {
+      color: #f9fafb;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .message {
+      margin-bottom: 20px;
+      padding: 35px 20px;
+      border: 1px dashed #4b5563;
+      border-radius: 14px;
+      color: #9ca3af;
+      text-align: center;
+      font-size: 16px;
+    }
+
+    .message.no-empty {
+      display: none;
+    }
+
+    .todo-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px;
+      border: 1px solid #374151;
+      border-radius: 14px;
+      background: #1f2937;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .todo-item:hover {
+      border-color: #6366f1;
+    }
+
+    .todo-item label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      color: #e5e7eb;
+      font-size: 16px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .todo-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #6366f1;
+      cursor: pointer;
+    }
+
+    .delete-task {
+      flex-shrink: 0;
+      padding: 9px 13px;
+      border: none;
+      border-radius: 8px;
+      background: #ef4444;
+      color: white;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .delete-task:hover {
+      background: #dc2626;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 35px 16px;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+
+      .input-wrapper {
+        flex-direction: column;
+      }
+
+      .add-task {
+        width: 100%;
+      }
+
+      .todo-item {
+        padding: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>To-Do List</h1>
+
+    <div class="input-wrapper">
+      <input
+        class="new-task"
+        id="new-task-input"
+        type="text"
+        placeholder="Add new task"
+      />
+      <button class="add-task" id="add-task-btn" type="button">Add</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-title">All tasks</span>
+        <span class="stat-value" id="all-count">0</span>
+      </div>
+      <div class="stat">
+        <span class="stat-title">Completed</span>
+        <span class="stat-value" id="completed-count">0</span>
+      </div>
+    </div>
+
+    <p class="message" id="message">Your task list is empty</p>
+
+    <ul class="todo-list" id="todo-list"></ul>
+  </main>
+  <script>
+    const input = document.querySelector('#new-task-input')
+    const addButton = document.querySelector('#add-task-btn')
+    const allCount = document.querySelector('#all-count')
+    const completedCount = document.querySelector('#completed-count')
+    const message = document.querySelector('#message')
+    const toDoList = document.querySelector('#todo-list')
+
+    let tasks = {}
+    let key = 0
+    let completed = 0
+
+    let listItem
+    let label
+    let checkbox
+    let deleteBtn
+
+    function updateButtonState() {
+      addButton.classList.toggle('blocked', !input.value.trim())
+    }
+    updateButtonState()
+
+    function addTask() {
+      let value = input.value.trim()
+
+      key += 1
+      tasks[key] = value
+      allCount.textContent = key
+
+      if (key > 0) {
+        message.classList.add('no-empty')
+      }
+
+      listItem = document.createElement('li')
+      listItem.className = 'todo-item'
+      label = document.createElement('label')
+      checkbox = document.createElement('input')
+      deleteBtn = document.createElement('button')
+
+      for (let task of Object.values(tasks)) {
+        label.textContent = task
+        label.className = 'todo-title'
+        checkbox.type = 'checkbox'
+        checkbox.className = 'todo-checkbox'
+        label.prepend(checkbox)
+        deleteBtn.textContent = 'Delete'
+        deleteBtn.className = 'delete-task'
+        listItem.appendChild(label)
+        listItem.appendChild(deleteBtn)
+        toDoList.appendChild(listItem)
+      }
+
+      input.value = ''
+      updateButtonState()
+    }
+
+    function deleteTask(event) {
+      deleteBtn = event.target
+
+      if (event.target.className === 'delete-task') {
+        const item = deleteBtn.closest('.todo-item')
+        const childCheckbox = item.querySelector('.todo-checkbox')
+
+        if (childCheckbox.checked) {
+          completed -= 1
+          completedCount.textContent = completed
+        }
+
+        deleteBtn.parentElement.remove()
+        key -= 1
+        allCount.textContent = key
+
+        if (key === 0) {
+          message.classList.remove('no-empty')
+        }
+      }
+    }
+
+    function isDone(event) {
+      label = event.target
+      checkbox = event.target
+
+      if (event.target.className === 'todo-title' || event.target.className === 'todo-checkbox') {
+        if (checkbox.checked) {
+          completed += 1
+          completedCount.textContent = completed
+        }
+        else {
+          completed -= 1
+          completedCount.textContent = completed
+        }
+      }
+    }
+
+    input.addEventListener('input', updateButtonState)
+    addButton.addEventListener('click', addTask)
+    toDoList.addEventListener('click', deleteTask)
+    toDoList.addEventListener('change', isDone)
+  </script>
+</body>
+</html>
